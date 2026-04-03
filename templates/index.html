@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>English Speaking Coach</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <div id="header">
+    <div id="header-left">
+      <div id="avatar">🎙️</div>
+      <div>
+        <h1>English Speaking Coach</h1>
+        <p>AI-powered · Turkish speaker support</p>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div id="modes">
+        <button class="mode-pill active" id="pill-normal"   onclick="setMode('normal')">Normal</button>
+        <button class="mode-pill"        id="pill-practice" onclick="setMode('practice')">Practice</button>
+        <button class="mode-pill"        id="pill-strict"   onclick="setMode('strict')">Strict</button>
+        <button class="mode-pill"        id="pill-exam"     onclick="setMode('exam')">Exam</button>
+      </div>
+      <button onclick="openScenario()" style="font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid #2a2a3a;background:transparent;color:#888;cursor:pointer;">🎭 Scenario</button>
+      <span id="active-scenario"></span>
+      <button onclick="toggleVocab()" style="font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid #2a2a3a;background:transparent;color:#888;cursor:pointer;">📖 Vocab <span id="vocab-count">0</span></button>
+      <button onclick="clearSession()" style="font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid #2a2a3a;background:transparent;color:#555;cursor:pointer;">✕ Clear</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div id="stats">
+    <div class="stat"><div class="stat-num" id="s-turns">0</div><div class="stat-label">Turns</div></div>
+    <div class="stat"><div class="stat-num" id="s-score">—</div><div class="stat-label">Fluency Score</div></div>
+    <div class="stat"><div class="stat-num" id="s-errors">0</div><div class="stat-label">Corrections</div></div>
+    <div class="stat"><div class="stat-num" id="s-streak">0</div><div class="stat-label">Perfect Streak</div></div>
+  </div>
+
+  <!-- Challenge Card -->
+  <div id="challenge-card">
+    <div id="challenge-header">
+      <span id="challenge-label">🎯 Speaking Challenge</span>
+      <button id="challenge-skip">Skip ✕</button>
+    </div>
+    <div id="challenge-text"></div>
+    <div id="challenge-hint"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+      <div id="challenge-progress"></div>
+      <button onclick="acceptChallenge()" style="padding:7px 20px;background:#6c63ff;color:white;border:none;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;">Accept Challenge ✓</button>
+    </div>
+    <div id="challenge-timer-bar">
+      <div id="challenge-timer-fill"></div>
+    </div>
+  </div>
+
+  <!-- Chat -->
+  <div id="chat-box">
+    <div id="start-screen" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;">
+      <div style="font-size:48px;">🎙️</div>
+      <div style="text-align:center;">
+        <p style="font-size:18px;font-weight:600;color:#fff;">Ready to practice?</p>
+        <p style="font-size:13px;color:#555;margin-top:4px;">Your AI English coach is waiting for you.</p>
+      </div>
+      <button onclick="startSession()" style="padding:12px 32px;background:#6c63ff;color:white;border:none;border-radius:24px;font-size:15px;font-weight:500;cursor:pointer;">Start Session</button>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div id="input-area">
+    <textarea id="user-input" rows="1" placeholder="Type in English and press Enter..."></textarea>
+    <button class="icon-btn" id="voice-btn" onclick="toggleVoice()" title="Toggle coach voice">🔊</button>
+    <button class="icon-btn" id="mic-btn"   onclick="toggleMic()"   title="Speak">🎤</button>
+    <button id="send-btn" onclick="sendMessage()" title="Send">➤</button>
+  </div>
+
+</div>
+
+<!-- Vocab Overlay -->
+<div id="vocab-overlay" onclick="toggleVocab()"></div>
+
+<!-- Vocab Panel -->
+<div id="vocab-panel">
+  <div id="vocab-header">
+    <div>
+      <h2>📖 Vocabulary Book</h2>
+      <p id="vocab-subtitle">0 words saved</p>
+    </div>
+    <button id="vocab-close" onclick="toggleVocab()">✕</button>
+  </div>
+  <div id="vocab-list">
+    <div id="vocab-empty">No words saved yet.<br>Start practicing to build your vocabulary!</div>
+  </div>
+</div>
+
+<!-- Scenario Modal -->
+<div id="scenario-overlay" onclick="handleOverlayClick(event)">
+  <div id="scenario-modal">
+    <button id="scenario-close" onclick="closeScenario()">✕</button>
+    <h2>🎭 Choose a Scenario</h2>
+    <p>Pick a situation and your coach will role-play with you.</p>
+
+    <div class="scenario-category">
+      <div class="scenario-category-title">💼 Business</div>
+      <div class="scenario-grid">
+        <button class="scenario-btn" onclick="selectScenario('job_interview')">
+          <div class="scenario-btn-icon">🤝</div>
+          <span class="scenario-btn-title">Job Interview</span>
+          <span class="scenario-btn-desc">Practice interview Q&A</span>
+        </button>
+        <button class="scenario-btn" onclick="selectScenario('business_meeting')">
+          <div class="scenario-btn-icon">📊</div>
+          <span class="scenario-btn-title">Business Meeting</span>
+          <span class="scenario-btn-desc">Present ideas, discuss plans</span>
+        </button>
+        <button class="scenario-btn" onclick="selectScenario('email_call')">
+          <div class="scenario-btn-icon">📞</div>
+          <span class="scenario-btn-title">Phone Call</span>
+          <span class="scenario-btn-desc">Professional phone English</span>
+        </button>
+        <button class="scenario-btn" onclick="selectScenario('negotiation')">
+          <div class="scenario-btn-icon">💰</div>
+          <span class="scenario-btn-title">Negotiation</span>
+          <span class="scenario-btn-desc">Salary or deal negotiation</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="scenario-category">
+      <div class="scenario-category-title">🧳 Travel</div>
+      <div class="scenario-grid">
+        <button class="scenario-btn" onclick="selectScenario('airport')">
+          <div class="scenario-btn-icon">✈️</div>
+          <span class="scenario-btn-title">Airport</span>
+          <span class="scenario-btn-desc">Check-in, boarding, customs</span>
+        </button>
+        <button class="scenario-btn" onclick="selectScenario('hotel')">
+          <div class="scenario-btn-icon">🏨</div>
+          <span class="scenario-btn-title">Hotel Check-in</span>
+          <span class="scenario-btn-desc">Reservations, requests</span>
+        </button>
+        <button class="scenario-btn" onclick="selectScenario('tourist')">
+          <div class="scenario-btn-icon">🗺️</div>
+          <span class="scenario-btn-title">Asking Directions</span>
+          <span class="scenario-btn-desc">Navigate a new city</span>
+        </button>
+        <button class="scenario-btn" onclick="selectScenario('travel_emergency')">
+          <div class="scenario-btn-icon">🆘</div>
+          <span class="scenario-btn-title">Travel Emergency</span>
+          <span class="scenario-btn-desc">Lost passport, missed flight</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="scenario-category">
+      <div class="scenario-category-title">🍽️ Daily Life</div>
+      <div class="scenario-grid">
+        <button class="scenario-btn" onclick="selectScenario('restaurant')">
+          <div class="scenario-btn-icon">🍴</div>
+          <span class="scenario-btn-title">Restaurant</span>
+          <span class="scenario-btn-desc">Order food, make requests</span>
+        </button>
+        <button class="scenario-btn" onclick="selectScenario('shopping')">
+          <div class="scenario-btn-icon">🛍️</div>
+          <span class="scenario-btn-title">Shopping</span>
+          <span class="scenario-btn-desc">Ask for help, compare items</span>
+        </button>
+        <button class="scenario-btn" onclick="selectScenario('doctor')">
+          <div class="scenario-btn-icon">🏥</div>
+          <span class="scenario-btn-title">Doctor's Appointment</span>
+          <span class="scenario-btn-desc">Describe symptoms, ask questions</span>
+        </button>
+        <button class="scenario-btn" onclick="selectScenario('small_talk')">
+          <div class="scenario-btn-icon">☕</div>
+          <span class="scenario-btn-title">Small Talk</span>
+          <span class="scenario-btn-desc">Casual conversation skills</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="scenario-category">
+      <div class="scenario-category-title">🎓 Academic</div>
+      <div class="scenario-grid">
+        <button class="scenario-btn" onclick="selectScenario('presentation')">
+          <div class="scenario-btn-icon">📢</div>
+          <span class="scenario-btn-title">Presentation</span>
+          <span class="scenario-btn-desc">Present a topic confidently</span>
+        </button>
+        <button class="scenario-btn" onclick="selectScenario('debate')">
+          <div class="scenario-btn-icon">🗣️</div>
+          <span class="scenario-btn-title">Debate</span>
+          <span class="scenario-btn-desc">Argue and defend your ideas</span>
+        </button>
+        <button class="scenario-btn" onclick="selectScenario('university_interview')">
+          <div class="scenario-btn-icon">🎓</div>
+          <span class="scenario-btn-title">University Interview</span>
+          <span class="scenario-btn-desc">Admission interview practice</span>
+        </button>
+        <button class="scenario-btn" onclick="selectScenario('free_chat')">
+          <div class="scenario-btn-icon">💬</div>
+          <span class="scenario-btn-title">Free Chat</span>
+          <span class="scenario-btn-desc">No scenario, just talk</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="/static/script.js"></script>
+</body>
+</html>
